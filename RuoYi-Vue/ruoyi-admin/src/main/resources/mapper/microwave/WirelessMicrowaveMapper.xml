@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.microwave.mapper.WirelessMicrowaveMapper">
+
+    <resultMap type="WirelessMicrowave" id="WirelessMicrowaveResult">
+        <result property="id"    column="id"    />
+        <result property="产品名称"    column="产品名称"    />
+        <result property="产品型号"    column="产品型号"    />
+        <result property="应用场景"    column="应用场景"    />
+        <result property="供货厂商"    column="供货厂商"    />
+        <result property="频率范围"    column="频率范围"    />
+        <result property="功率容量"    column="功率容量"    />
+        <result property="插入损耗"    column="插入损耗"    />
+        <result property="接头类型"    column="接头类型"    />
+        <result property="PIM"    column="PIM"    />
+    </resultMap>
+
+    <sql id="selectWirelessMicrowaveVo">
+        select id, 产品名称, 产品型号, 应用场景, 供货厂商, 频率范围, 功率容量, 插入损耗, 接头类型, PIM from wireless_microwave
+    </sql>
+
+    <select id="selectWirelessMicrowaveList" parameterType="WirelessMicrowave" resultMap="WirelessMicrowaveResult">
+        <include refid="selectWirelessMicrowaveVo"/>
+        <where>
+            <if test="产品名称 != null  and 产品名称 != ''"> and 产品名称 like concat('%', #{产品名称}, '%')</if>
+            <if test="应用场景 != null  and 应用场景 != ''"> and 应用场景 like concat('%', #{应用场景}, '%')</if>
+            <if test="频率范围 != null  and 频率范围 != ''">
+                <choose>
+                    <!-- 如果输入的频率范围是一个范围 -->
+                    <when test="频率范围.indexOf('-') > 0">
+                        <bind name="startCurrent" value="频率范围.substring(0, 频率范围.indexOf('-'))"/>
+                        <bind name="endCurrent" value="频率范围.substring(频率范围.indexOf('-') + 1)"/>
+                        and (
+                        <!-- 情况1: 数据库范围完全包含输入范围 -->
+                        (cast(substring_index(频率范围, '-', 1) as signed) &lt;= cast(#{startCurrent} as signed) and cast(substring_index(频率范围, '-', -1) as signed) &gt;= cast(#{endCurrent} as signed))
+                        <!-- 情况2: 输入范围完全包含数据库范围 -->
+                        or (cast(substring_index(频率范围, '-', 1) as signed) &gt;= cast(#{startCurrent} as signed) and cast(substring_index(频率范围, '-', -1) as signed) &lt;= cast(#{endCurrent} as signed))
+                        <!-- 情况3: 输入范围与数据库范围部分重叠 -->
+                        or (cast(substring_index(频率范围, '-', 1) as signed) &lt;= cast(#{endCurrent} as signed) and cast(substring_index(频率范围, '-', -1) as signed) &gt;= cast(#{startCurrent} as signed))
+                        )
+                    </when>
+                    <!-- 如果输入的频率范围是一个单独的数字 -->
+                    <otherwise>
+                        and (cast(substring_index(频率范围, '-', 1) as signed) &lt;= cast(#{频率范围} as signed) and cast(substring_index(频率范围, '-', -1) as signed) &gt;= cast(#{频率范围} as signed))
+                    </otherwise>
+                </choose>
+            </if>
+            <if test="功率容量 != null  and 功率容量 != ''"> and 功率容量 like concat('%', #{功率容量}, '%')</if>
+            <if test="插入损耗 != null  and 插入损耗 != ''">
+                <![CDATA[
+                and 插入损耗 is not null and 插入损耗 <= #{插入损耗}
+            ]]>
+            </if>
+            <if test="PIM != null  and PIM != ''"> and PIM like concat('%', #{PIM}, '%')</if>
+        </where>
+    </select>
+
+    <select id="selectWirelessMicrowaveById" parameterType="Long" resultMap="WirelessMicrowaveResult">
+        <include refid="selectWirelessMicrowaveVo"/>
+        where id = #{id}
+    </select>
+
+    <insert id="insertWirelessMicrowave" parameterType="WirelessMicrowave" useGeneratedKeys="true" keyProperty="id">
+        insert into wireless_microwave
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="产品名称 != null and 产品名称 != ''">产品名称,</if>
+            <if test="产品型号 != null and 产品型号 != ''">产品型号,</if>
+            <if test="应用场景 != null">应用场景,</if>
+            <if test="供货厂商 != null and 供货厂商 != ''">供货厂商,</if>
+            <if test="频率范围 != null">频率范围,</if>
+            <if test="功率容量 != null">功率容量,</if>
+            <if test="插入损耗 != null">插入损耗,</if>
+            <if test="接头类型 != null">接头类型,</if>
+            <if test="PIM != null">PIM,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="产品名称 != null and 产品名称 != ''">#{产品名称},</if>
+            <if test="产品型号 != null and 产品型号 != ''">#{产品型号},</if>
+            <if test="应用场景 != null">#{应用场景},</if>
+            <if test="供货厂商 != null and 供货厂商 != ''">#{供货厂商},</if>
+            <if test="频率范围 != null">#{频率范围},</if>
+            <if test="功率容量 != null">#{功率容量},</if>
+            <if test="插入损耗 != null">#{插入损耗},</if>
+            <if test="接头类型 != null">#{接头类型},</if>
+            <if test="PIM != null">#{PIM},</if>
+        </trim>
+    </insert>
+
+    <update id="updateWirelessMicrowave" parameterType="WirelessMicrowave">
+        update wireless_microwave
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="产品名称 != null and 产品名称 != ''">产品名称 = #{产品名称},</if>
+            <if test="产品型号 != null and 产品型号 != ''">产品型号 = #{产品型号},</if>
+            <if test="应用场景 != null">应用场景 = #{应用场景},</if>
+            <if test="供货厂商 != null and 供货厂商 != ''">供货厂商 = #{供货厂商},</if>
+            <if test="频率范围 != null">频率范围 = #{频率范围},</if>
+            <if test="功率容量 != null">功率容量 = #{功率容量},</if>
+            <if test="插入损耗 != null">插入损耗 = #{插入损耗},</if>
+            <if test="接头类型 != null">接头类型 = #{接头类型},</if>
+            <if test="PIM != null">PIM = #{PIM},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteWirelessMicrowaveById" parameterType="Long">
+        delete from wireless_microwave where id = #{id}
+    </delete>
+
+    <delete id="deleteWirelessMicrowaveByIds" parameterType="String">
+        delete from wireless_microwave where id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+</mapper>

@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.filter.mapper.FilterMapper">
+
+    <resultMap type="Filter" id="FilterResult">
+        <result property="id"    column="id"    />
+        <result property="产品系列"    column="产品系列"    />
+        <result property="产品型号"    column="产品型号"    />
+        <result property="应用场景"    column="应用场景"    />
+        <result property="供货厂商"    column="供货厂商"    />
+        <result property="电压"    column="电压"    />
+        <result property="相位"    column="相位"    />
+        <result property="电流"    column="电流"    />
+    </resultMap>
+
+    <sql id="selectFilterVo">
+        select id, 产品系列, 产品型号, 应用场景, 供货厂商, 电压, 相位, 电流 from filter
+    </sql>
+
+    <select id="selectFilterList" parameterType="Filter" resultMap="FilterResult">
+        <include refid="selectFilterVo"/>
+        <where>
+            <if test="应用场景 != null  and 应用场景 != ''"> and 应用场景 like concat('%', #{应用场景}, '%')</if>
+            <if test="电压 != null  and 电压 != ''"> and 电压 like concat('%', #{电压}, '%')</if>
+            <if test="相位 != null  and 相位 != ''"> and 相位 like concat('%', #{相位}, '%')</if>
+            <if test="电流 != null  and 电流 != ''">
+                <choose>
+                    <!-- 如果输入的电流是一个范围 -->
+                    <when test="电流.indexOf('-') > 0">
+                        <bind name="startCurrent" value="电流.substring(0, 电流.indexOf('-'))"/>
+                        <bind name="endCurrent" value="电流.substring(电流.indexOf('-') + 1)"/>
+                        and (
+                        <!-- 情况1: 数据库范围完全包含输入范围 -->
+                        (cast(substring_index(电流, '-', 1) as signed) &lt;= cast(#{startCurrent} as signed) and cast(substring_index(电流, '-', -1) as signed) &gt;= cast(#{endCurrent} as signed))
+<!--                        &lt;!&ndash; 情况2: 输入范围完全包含数据库范围 &ndash;&gt;
+                        or (cast(substring_index(电流, '-', 1) as signed) &gt;= cast(#{startCurrent} as signed) and cast(substring_index(电流, '-', -1) as signed) &lt;= cast(#{endCurrent} as signed))
+                        &lt;!&ndash; 情况3: 输入范围与数据库范围部分重叠 &ndash;&gt;
+                        or (cast(substring_index(电流, '-', 1) as signed) &lt;= cast(#{endCurrent} as signed) and cast(substring_index(电流, '-', -1) as signed) &gt;= cast(#{startCurrent} as signed))-->
+                        )
+                    </when>
+                    <!-- 如果输入的电流是一个单独的数字 -->
+                    <otherwise>
+                        and (cast(substring_index(电流, '-', 1) as signed) &lt;= cast(#{电流} as signed) and cast(substring_index(电流, '-', -1) as signed) &gt;= cast(#{电流} as signed))
+                    </otherwise>
+                </choose>
+            </if>
+        </where>
+    </select>
+
+    <select id="selectFilterById" parameterType="Long" resultMap="FilterResult">
+        <include refid="selectFilterVo"/>
+        where id = #{id}
+    </select>
+
+    <insert id="insertFilter" parameterType="Filter" useGeneratedKeys="true" keyProperty="id">
+        insert into filter
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="产品系列 != null and 产品系列 != ''">产品系列,</if>
+            <if test="产品型号 != null and 产品型号 != ''">产品型号,</if>
+            <if test="应用场景 != null">应用场景,</if>
+            <if test="供货厂商 != null and 供货厂商 != ''">供货厂商,</if>
+            <if test="电压 != null">电压,</if>
+            <if test="相位 != null">相位,</if>
+            <if test="电流 != null">电流,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="产品系列 != null and 产品系列 != ''">#{产品系列},</if>
+            <if test="产品型号 != null and 产品型号 != ''">#{产品型号},</if>
+            <if test="应用场景 != null">#{应用场景},</if>
+            <if test="供货厂商 != null and 供货厂商 != ''">#{供货厂商},</if>
+            <if test="电压 != null">#{电压},</if>
+            <if test="相位 != null">#{相位},</if>
+            <if test="电流 != null">#{电流},</if>
+        </trim>
+    </insert>
+
+    <update id="updateFilter" parameterType="Filter">
+        update filter
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="产品系列 != null and 产品系列 != ''">产品系列 = #{产品系列},</if>
+            <if test="产品型号 != null and 产品型号 != ''">产品型号 = #{产品型号},</if>
+            <if test="应用场景 != null">应用场景 = #{应用场景},</if>
+            <if test="供货厂商 != null and 供货厂商 != ''">供货厂商 = #{供货厂商},</if>
+            <if test="电压 != null">电压 = #{电压},</if>
+            <if test="相位 != null">相位 = #{相位},</if>
+            <if test="电流 != null">电流 = #{电流},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteFilterById" parameterType="Long">
+        delete from filter where id = #{id}
+    </delete>
+
+    <delete id="deleteFilterByIds" parameterType="String">
+        delete from filter where id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+</mapper>

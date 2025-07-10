@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.antenna.mapper.WirelessAntennaMapper">
+    
+    <resultMap type="WirelessAntenna" id="WirelessAntennaResult">
+        <result property="id"    column="id"    />
+        <result property="天线种类"    column="天线种类"    />
+        <result property="产品型号"    column="产品型号"    />
+        <result property="应用场景"    column="应用场景"    />
+        <result property="供货厂商"    column="供货厂商"    />
+        <result property="室内外"    column="室内外"    />
+        <result property="全定向"    column="全定向"    />
+        <result property="频率范围"    column="频率范围"    />
+        <result property="驻波比"    column="驻波比"    />
+        <result property="增益"    column="增益"    />
+        <result property="极化方式"    column="极化方式"    />
+        <result property="功率"    column="功率"    />
+        <result property="阻抗"    column="阻抗"    />
+    </resultMap>
+
+    <select id="selectAllAntennaTypes" resultType="java.lang.String">
+        select distinct 天线种类 from wireless_antenna
+    </select>
+
+    <select id="selectAllIndoorOutdoorTypes" resultType="java.lang.String">
+        select distinct 室内外 from wireless_antenna
+    </select>
+
+    <select id="selectAllOmniDirectionalTypes" resultType="java.lang.String">
+        select distinct 全定向 from wireless_antenna
+    </select>
+
+    <select id="selectAllPolarizationTypes" resultType="java.lang.String">
+        select distinct 极化方式 from wireless_antenna
+    </select>
+
+    <sql id="selectWirelessAntennaVo">
+        select id, 天线种类, 产品型号, 应用场景, 供货厂商, 室内外, 全定向, 频率范围, 驻波比, 增益, 极化方式, 功率, 阻抗 from wireless_antenna
+    </sql>
+
+    <select id="selectWirelessAntennaList" parameterType="WirelessAntenna" resultMap="WirelessAntennaResult">
+        <include refid="selectWirelessAntennaVo"/>
+        <where>  
+            <if test="天线种类 != null  and 天线种类 != ''"> and 天线种类 = #{天线种类}</if>
+            <if test="应用场景 != null  and 应用场景 != ''"> and 应用场景 like concat('%', #{应用场景}, '%')</if>
+            <if test="室内外 != null  and 室内外 != ''"> and 室内外 = #{室内外}</if>
+            <if test="全定向 != null  and 全定向 != ''"> and 全定向 = #{全定向}</if>
+            <if test="频率范围 != null  and 频率范围 != ''">
+                <choose>
+                    <!-- 如果输入的频率是一个范围 -->
+                    <when test="频率范围.indexOf('-') > 0">
+                        <bind name="startFreq" value="频率范围.substring(0, 频率范围.indexOf('-'))"/>
+                        <bind name="endFreq" value="频率范围.substring(频率范围.indexOf('-') + 1)"/>
+                        and (
+                        <!-- 情况1: 数据库范围完全包含输入范围 -->
+                        (cast(substring_index(频率范围, '-', 1) as signed) &lt;= cast(#{startFreq} as signed) and cast(substring_index(频率范围, '-', -1) as signed) &gt;= cast(#{endFreq} as signed))
+                        <!--                        &lt;!&ndash; 情况2: 输入范围完全包含数据库范围 &ndash;&gt;
+                                                or (cast(substring_index(频率范围, '-', 1) as signed) &gt;= cast(#{startFreq} as signed) and cast(substring_index(频率范围, '-', -1) as signed) &lt;= cast(#{endFreq} as signed))
+                                                &lt;!&ndash; 情况3: 输入范围与数据库范围部分重叠 &ndash;&gt;
+                                                or (cast(substring_index(频率范围, '-', 1) as signed) &lt;= cast(#{endFreq} as signed) and cast(substring_index(频率范围, '-', -1) as signed) &gt;= cast(#{startFreq} as signed))-->
+                        )
+                    </when>
+                    <!-- 如果输入的频率是一个单独的数字 -->
+                    <otherwise>
+                        and (cast(substring_index(频率范围, '-', 1) as signed) &lt;= cast(#{频率范围} as signed) and cast(substring_index(频率范围, '-', -1) as signed) &gt;= cast(#{频率范围} as signed))
+                    </otherwise>
+                </choose>
+            </if>
+            <if test="驻波比 != null  and 驻波比 != ''"> and 驻波比 like concat('%', #{驻波比}, '%')</if>
+            <if test="增益 != null  and 增益 != ''"> and 增益 like concat('%', #{增益}, '%')</if>
+            <if test="极化方式 != null  and 极化方式 != ''"> and 极化方式 like concat('%', #{极化方式}, '%')</if>
+            <if test="功率 != null  and 功率 != ''"> and 功率 like concat('%', #{功率}, '%')</if>
+            <if test="阻抗 != null  and 阻抗 != ''"> and 阻抗 like concat('%', #{阻抗}, '%')</if>
+        </where>
+    </select>
+    
+    <select id="selectWirelessAntennaById" parameterType="Long" resultMap="WirelessAntennaResult">
+        <include refid="selectWirelessAntennaVo"/>
+        where id = #{id}
+    </select>
+
+    <insert id="insertWirelessAntenna" parameterType="WirelessAntenna" useGeneratedKeys="true" keyProperty="id">
+        insert into wireless_antenna
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="天线种类 != null and 天线种类 != ''">天线种类,</if>
+            <if test="产品型号 != null and 产品型号 != ''">产品型号,</if>
+            <if test="应用场景 != null">应用场景,</if>
+            <if test="供货厂商 != null and 供货厂商 != ''">供货厂商,</if>
+            <if test="室内外 != null">室内外,</if>
+            <if test="全定向 != null">全定向,</if>
+            <if test="频率范围 != null">频率范围,</if>
+            <if test="驻波比 != null">驻波比,</if>
+            <if test="增益 != null">增益,</if>
+            <if test="极化方式 != null">极化方式,</if>
+            <if test="功率 != null">功率,</if>
+            <if test="阻抗 != null">阻抗,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="天线种类 != null and 天线种类 != ''">#{天线种类},</if>
+            <if test="产品型号 != null and 产品型号 != ''">#{产品型号},</if>
+            <if test="应用场景 != null">#{应用场景},</if>
+            <if test="供货厂商 != null and 供货厂商 != ''">#{供货厂商},</if>
+            <if test="室内外 != null">#{室内外},</if>
+            <if test="全定向 != null">#{全定向},</if>
+            <if test="频率范围 != null">#{频率范围},</if>
+            <if test="驻波比 != null">#{驻波比},</if>
+            <if test="增益 != null">#{增益},</if>
+            <if test="极化方式 != null">#{极化方式},</if>
+            <if test="功率 != null">#{功率},</if>
+            <if test="阻抗 != null">#{阻抗},</if>
+         </trim>
+    </insert>
+
+    <update id="updateWirelessAntenna" parameterType="WirelessAntenna">
+        update wireless_antenna
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="天线种类 != null and 天线种类 != ''">天线种类 = #{天线种类},</if>
+            <if test="产品型号 != null and 产品型号 != ''">产品型号 = #{产品型号},</if>
+            <if test="应用场景 != null">应用场景 = #{应用场景},</if>
+            <if test="供货厂商 != null and 供货厂商 != ''">供货厂商 = #{供货厂商},</if>
+            <if test="室内外 != null">室内外 = #{室内外},</if>
+            <if test="全定向 != null">全定向 = #{全定向},</if>
+            <if test="频率范围 != null">频率范围 = #{频率范围},</if>
+            <if test="驻波比 != null">驻波比 = #{驻波比},</if>
+            <if test="增益 != null">增益 = #{增益},</if>
+            <if test="极化方式 != null">极化方式 = #{极化方式},</if>
+            <if test="功率 != null">功率 = #{功率},</if>
+            <if test="阻抗 != null">阻抗 = #{阻抗},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteWirelessAntennaById" parameterType="Long">
+        delete from wireless_antenna where id = #{id}
+    </delete>
+
+    <delete id="deleteWirelessAntennaByIds" parameterType="String">
+        delete from wireless_antenna where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+</mapper>

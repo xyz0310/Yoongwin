@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.opticalFiber.mapper.opticalCommunicationsMapper">
+    
+    <resultMap type="opticalCommunications" id="opticalCommunicationsResult">
+        <result property="id"    column="id"    />
+        <result property="产品类型"    column="产品类型"    />
+        <result property="产品型号"    column="产品型号"    />
+        <result property="应用场景"    column="应用场景"    />
+        <result property="供货厂商"    column="供货厂商"    />
+        <result property="光纤芯数"    column="光纤芯数"    />
+        <result property="排列方式"    column="排列方式"    />
+        <result property="光纤类型"    column="光纤类型"    />
+        <result property="传输波长"    column="传输波长"    />
+        <result property="长度"    column="长度"    />
+        <result property="接头类型"    column="接头类型"    />
+    </resultMap>
+
+    <sql id="selectopticalCommunicationsVo">
+        select id, 产品类型, 产品型号, 应用场景, 供货厂商, 光纤芯数, 排列方式, 光纤类型, 传输波长, 长度, 接头类型 from optical_communications
+    </sql>
+
+    <select id="selectopticalCommunicationsList" parameterType="opticalCommunications" resultMap="opticalCommunicationsResult">
+        <include refid="selectopticalCommunicationsVo"/>
+        <where>  
+            <if test="应用场景 != null  and 应用场景 != ''"> and 应用场景 like concat('%', #{应用场景}, '%')</if>
+            <if test="光纤芯数 != null  and 光纤芯数 != ''"> and 光纤芯数 like concat('%', #{光纤芯数}, '%')</if>
+            <if test="排列方式 != null  and 排列方式 != ''"> and 排列方式 like concat('%', #{排列方式}, '%')</if>
+            <if test="光纤类型 != null  and 光纤类型 != ''"> and 光纤类型 = #{光纤类型}</if>
+            <if test="传输波长 != null  and 传输波长 != ''"> and 传输波长 like concat('%', #{传输波长}, '%')</if>
+        </where>
+    </select>
+    
+    <select id="selectopticalCommunicationsById" parameterType="Long" resultMap="opticalCommunicationsResult">
+        <include refid="selectopticalCommunicationsVo"/>
+        where id = #{id}
+    </select>
+
+    <insert id="insertopticalCommunications" parameterType="opticalCommunications" useGeneratedKeys="true" keyProperty="id">
+        insert into optical_communications
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="产品类型 != null and 产品类型 != ''">产品类型,</if>
+            <if test="产品型号 != null and 产品型号 != ''">产品型号,</if>
+            <if test="应用场景 != null">应用场景,</if>
+            <if test="供货厂商 != null and 供货厂商 != ''">供货厂商,</if>
+            <if test="光纤芯数 != null">光纤芯数,</if>
+            <if test="排列方式 != null">排列方式,</if>
+            <if test="光纤类型 != null">光纤类型,</if>
+            <if test="传输波长 != null">传输波长,</if>
+            <if test="长度 != null">长度,</if>
+            <if test="接头类型 != null">接头类型,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="产品类型 != null and 产品类型 != ''">#{产品类型},</if>
+            <if test="产品型号 != null and 产品型号 != ''">#{产品型号},</if>
+            <if test="应用场景 != null">#{应用场景},</if>
+            <if test="供货厂商 != null and 供货厂商 != ''">#{供货厂商},</if>
+            <if test="光纤芯数 != null">#{光纤芯数},</if>
+            <if test="排列方式 != null">#{排列方式},</if>
+            <if test="光纤类型 != null">#{光纤类型},</if>
+            <if test="传输波长 != null">#{传输波长},</if>
+            <if test="长度 != null">#{长度},</if>
+            <if test="接头类型 != null">#{接头类型},</if>
+         </trim>
+    </insert>
+
+    <update id="updateopticalCommunications" parameterType="opticalCommunications">
+        update optical_communications
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="产品类型 != null and 产品类型 != ''">产品类型 = #{产品类型},</if>
+            <if test="产品型号 != null and 产品型号 != ''">产品型号 = #{产品型号},</if>
+            <if test="应用场景 != null">应用场景 = #{应用场景},</if>
+            <if test="供货厂商 != null and 供货厂商 != ''">供货厂商 = #{供货厂商},</if>
+            <if test="光纤芯数 != null">光纤芯数 = #{光纤芯数},</if>
+            <if test="排列方式 != null">排列方式 = #{排列方式},</if>
+            <if test="光纤类型 != null">光纤类型 = #{光纤类型},</if>
+            <if test="传输波长 != null">传输波长 = #{传输波长},</if>
+            <if test="长度 != null">长度 = #{长度},</if>
+            <if test="接头类型 != null">接头类型 = #{接头类型},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteopticalCommunicationsById" parameterType="Long">
+        delete from optical_communications where id = #{id}
+    </delete>
+
+    <delete id="deleteopticalCommunicationsByIds" parameterType="String">
+        delete from optical_communications where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+</mapper>

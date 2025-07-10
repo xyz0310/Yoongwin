@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.order.mapper.WorkOrderMapper">
+    
+    <resultMap type="WorkOrder" id="WorkOrderResult">
+        <result property="id"    column="id"    />
+        <result property="技术员"    column="技术员"    />
+        <result property="业务员"    column="业务员"    />
+        <result property="工单主题"    column="工单主题"    />
+        <result property="相关内容"    column="相关内容"    />
+        <result property="状态"    column="状态"    />
+        <result property="单号"    column="单号"    />
+        <result property="创建时间"    column="创建时间"    />
+        <result property="修改时间"    column="修改时间"    />
+    </resultMap>
+
+    <sql id="selectWorkOrderVo">
+        select id, 技术员, 业务员, 工单主题, 相关内容, 状态, 单号, 创建时间, 修改时间 from work_order
+    </sql>
+
+    <select id="selectWorkOrderList" parameterType="WorkOrder" resultMap="WorkOrderResult">
+        <include refid="selectWorkOrderVo"/>
+        <where>  
+            <if test="技术员 != null  and 技术员 != ''"> and 技术员 = #{技术员}</if>
+            <if test="业务员 != null  and 业务员 != ''"> and 业务员 = #{业务员}</if>
+            <if test="创建时间 != null "> and 创建时间 = #{创建时间}</if>
+        </where>
+    </select>
+    
+    <select id="selectWorkOrderById" parameterType="Long" resultMap="WorkOrderResult">
+        <include refid="selectWorkOrderVo"/>
+        where id = #{id}
+    </select>
+
+    <select id="getTechnicians" resultType="java.lang.String">
+        select distinct 技术员 from work_order
+    </select>
+
+    <select id="getSalesmen" resultType="java.lang.String">
+        select distinct 业务员 from work_order
+    </select>
+
+    <insert id="insertWorkOrder" parameterType="WorkOrder">
+        insert into work_order
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="id != null">id,</if>
+            <if test="技术员 != null and 技术员 != ''">技术员,</if>
+            <if test="业务员 != null and 业务员 != ''">业务员,</if>
+            <if test="工单主题 != null">工单主题,</if>
+            <if test="相关内容 != null">相关内容,</if>
+            <if test="状态 != null">状态,</if>
+            <if test="单号 != null">单号,</if>
+            <if test="创建时间 != null">创建时间,</if>
+            <if test="修改时间 != null">修改时间,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="id != null">#{id},</if>
+            <if test="技术员 != null and 技术员 != ''">#{技术员},</if>
+            <if test="业务员 != null and 业务员 != ''">#{业务员},</if>
+            <if test="工单主题 != null">#{工单主题},</if>
+            <if test="相关内容 != null">#{相关内容},</if>
+            <if test="状态 != null">#{状态},</if>
+            <if test="单号 != null">#{单号},</if>
+            <if test="创建时间 != null">#{创建时间},</if>
+            <if test="修改时间 != null">#{修改时间},</if>
+         </trim>
+    </insert>
+
+    <update id="updateWorkOrder" parameterType="WorkOrder">
+        update work_order
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="技术员 != null and 技术员 != ''">技术员 = #{技术员},</if>
+            <if test="业务员 != null and 业务员 != ''">业务员 = #{业务员},</if>
+            <if test="工单主题 != null">工单主题 = #{工单主题},</if>
+            <if test="相关内容 != null">相关内容 = #{相关内容},</if>
+            <if test="状态 != null">状态 = #{状态},</if>
+            <if test="单号 != null">单号 = #{单号},</if>
+            <if test="创建时间 != null">创建时间 = #{创建时间},</if>
+            <if test="修改时间 != null">修改时间 = #{修改时间},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteWorkOrderById" parameterType="Long">
+        delete from work_order where id = #{id}
+    </delete>
+
+    <delete id="deleteWorkOrderByIds" parameterType="String">
+        delete from work_order where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+</mapper>

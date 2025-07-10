@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.ups.mapper.UpsMapper">
+
+    <resultMap type="Ups" id="UpsResult">
+        <result property="id"    column="id"    />
+        <result property="产品系列"    column="产品系列"    />
+        <result property="产品型号"    column="产品型号"    />
+        <result property="应用场景"    column="应用场景"    />
+        <result property="供货厂商"    column="供货厂商"    />
+        <result property="容量"    column="容量"    />
+        <result property="功率"    column="功率"    />
+        <result property="输入电压大小"    column="输入电压大小"    />
+        <result property="输入电压相位"    column="输入电压相位"    />
+        <result property="输入电压分类"    column="输入电压分类"    />
+        <result property="输出电压大小"    column="输出电压大小"    />
+        <result property="输出电压相位"    column="输出电压相位"    />
+        <result property="输出电压分类"    column="输出电压分类"    />
+        <result property="输入频率"    column="输入频率"    />
+        <result property="输出频率"    column="输出频率"    />
+    </resultMap>
+
+    <sql id="selectUpsVo">
+        select id, 产品系列, 产品型号, 应用场景, 供货厂商, 容量, 功率, 输入电压大小, 输入电压相位, 输入电压分类, 输出电压大小, 输出电压相位, 输出电压分类, 输入频率,输出频率 from ups
+    </sql>
+
+    <select id="selectUpsList" parameterType="Ups" resultMap="UpsResult">
+        <include refid="selectUpsVo"/>
+        <where>
+            <if test="应用场景 != null  and 应用场景 != ''"> and 应用场景 like concat('%', #{应用场景}, '%')</if>
+            <if test="容量 != null  and 容量 != ''"> and 容量 like concat('%', #{容量}, '%')</if>
+            <if test="功率 != null  and 功率 != ''"> and 功率 like concat('%', #{功率}, '%')</if>
+            <if test="输入电压相位 != null  and 输入电压相位 != ''"> and 输入电压相位 = #{输入电压相位}</if>
+            <if test="输出电压相位 != null  and 输出电压相位 != ''"> and 输出电压相位 = #{输出电压相位}</if>
+            <if test="输入电压大小 != null  and 输入电压大小 != ''">
+                <choose>
+                    <when test="输入电压大小.indexOf('-') > 0">
+                        <bind name="startFreq" value="输入电压大小.substring(0, 输入电压大小.indexOf('-'))"/>
+                        <bind name="endFreq" value="输入电压大小.substring(输入电压大小.indexOf('-') + 1)"/>
+                        and (
+                        <!-- 情况1: 数据库范围完全包含输入范围 -->
+                        (cast(substring_index(输入电压大小, '-', 1) as signed) &lt;= cast(#{startFreq} as signed) and cast(substring_index(输入电压大小, '-', -1) as signed) &gt;= cast(#{endFreq} as signed))
+<!--                        &lt;!&ndash; 情况2: 输入范围完全包含数据库范围 &ndash;&gt;
+                        or (cast(substring_index(输入电压大小, '-', 1) as signed) &gt;= cast(#{startFreq} as signed) and cast(substring_index(输入电压大小, '-', -1) as signed) &lt;= cast(#{endFreq} as signed))
+                        &lt;!&ndash; 情况3: 输入范围与数据库范围部分重叠 &ndash;&gt;
+                        or (cast(substring_index(输入电压大小, '-', 1) as signed) &lt;= cast(#{endFreq} as signed) and cast(substring_index(输入电压大小, '-', -1) as signed) &gt;= cast(#{startFreq} as signed))-->
+                        )
+                    </when>
+                    <otherwise>
+                        and (cast(substring_index(输入电压大小, '-', 1) as signed) &lt;= cast(#{输入电压大小} as signed) and cast(substring_index(输入电压大小, '-', -1) as signed) &gt;= cast(#{输入电压大小} as signed))
+                    </otherwise>
+                </choose>
+            </if>
+            <if test="输出电压大小 != null  and 输出电压大小 != ''"> and 输出电压大小 like concat('%', #{输出电压大小}, '%')</if>
+            <if test="输入频率 != null  and 输入频率 != ''">
+                <choose>
+                    <!-- 如果输入的频率是一个范围 -->
+                    <when test="输入频率.indexOf('-') > 0">
+                        <bind name="startFreq" value="输入频率.substring(0, 输入频率.indexOf('-'))"/>
+                        <bind name="endFreq" value="输入频率.substring(输入频率.indexOf('-') + 1)"/>
+                        and (
+                        <!-- 情况1: 数据库范围完全包含输入范围 -->
+                        (cast(substring_index(输入频率, '-', 1) as signed) &lt;= cast(#{startFreq} as signed) and cast(substring_index(输入频率, '-', -1) as signed) &gt;= cast(#{endFreq} as signed))
+<!--                        &lt;!&ndash; 情况2: 输入范围完全包含数据库范围 &ndash;&gt;
+                        or (cast(substring_index(输入频率, '-', 1) as signed) &gt;= cast(#{startFreq} as signed) and cast(substring_index(输入频率, '-', -1) as signed) &lt;= cast(#{endFreq} as signed))
+                        &lt;!&ndash; 情况3: 输入范围与数据库范围部分重叠 &ndash;&gt;
+                        or (cast(substring_index(输入频率, '-', 1) as signed) &lt;= cast(#{endFreq} as signed) and cast(substring_index(输入频率, '-', -1) as signed) &gt;= cast(#{startFreq} as signed))-->
+                        )
+                    </when>
+                    <!-- 如果输入的频率是一个单独的数字 -->
+                    <otherwise>
+                        and (cast(substring_index(输入频率, '-', 1) as signed) &lt;= cast(#{输入频率} as signed) and cast(substring_index(输入频率, '-', -1) as signed) &gt;= cast(#{输入频率} as signed))
+                    </otherwise>
+                </choose>
+            </if>
+            <if test="输出频率 != null  and 输出频率 != ''">
+                <choose>
+                    <!-- 如果输出的频率是一个范围 -->
+                    <when test="输出频率.indexOf('-') > 0">
+                        <bind name="startFreq" value="输出频率.substring(0, 输出频率.indexOf('-'))"/>
+                        <bind name="endFreq" value="输出频率.substring(输出频率.indexOf('-') + 1)"/>
+                        and (
+                        <!-- 情况1: 数据库范围完全包含输入范围 -->
+                        (cast(substring_index(输出频率, '-', 1) as signed) &lt;= cast(#{startFreq} as signed) and cast(substring_index(输出频率, '-', -1) as signed) &gt;= cast(#{endFreq} as signed))
+<!--                        &lt;!&ndash; 情况2: 输入范围完全包含数据库范围 &ndash;&gt;
+                        or (cast(substring_index(输出频率, '-', 1) as signed) &gt;= cast(#{startFreq} as signed) and cast(substring_index(输出频率, '-', -1) as signed) &lt;= cast(#{endFreq} as signed))
+                        &lt;!&ndash; 情况3: 输入范围与数据库范围部分重叠 &ndash;&gt;
+                        or (cast(substring_index(输出频率, '-', 1) as signed) &lt;= cast(#{endFreq} as signed) and cast(substring_index(输出频率, '-', -1) as signed) &gt;= cast(#{startFreq} as signed))-->
+                        )
+                    </when>
+                    <!-- 如果输出的频率是一个单独的数字 -->
+                    <otherwise>
+                        and (cast(substring_index(输出频率, '-', 1) as signed) &lt;= cast(#{输出频率} as signed) and cast(substring_index(输出频率, '-', -1) as signed) &gt;= cast(#{输出频率} as signed))
+                    </otherwise>
+                </choose>
+            </if>
+        </where>
+    </select>
+
+    <select id="selectDistinctInputVoltagePhase" resultType="java.lang.String">
+        select distinct 输入电压相位 from ups
+    </select>
+
+    <select id="selectDistinctOutputVoltagePhase" resultType="java.lang.String">
+        select distinct 输出电压相位 from ups
+    </select>
+
+    <select id="selectUpsById" parameterType="Long" resultMap="UpsResult">
+        <include refid="selectUpsVo"/>
+        where id = #{id}
+    </select>
+
+    <insert id="insertUps" parameterType="Ups" useGeneratedKeys="true" keyProperty="id">
+        insert into ups
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="产品系列 != null">产品系列,</if>
+            <if test="产品型号 != null">产品型号,</if>
+            <if test="应用场景 != null and 应用场景 != ''">应用场景,</if>
+            <if test="供货厂商 != null">供货厂商,</if>
+            <if test="容量 != null and 容量 != ''">容量,</if>
+            <if test="功率 != null and 功率 != ''">功率,</if>
+            <if test="输入电压大小 != null and 输入电压大小 != ''">输入电压大小,</if>
+            <if test="输入电压相位 != null">输入电压相位,</if>
+            <if test="输入电压分类 != null">输入电压分类,</if>
+            <if test="输出电压大小 != null and 输出电压大小 != ''">输出电压大小,</if>
+            <if test="输出电压相位 != null">输出电压相位,</if>
+            <if test="输出电压分类 != null">输出电压分类,</if>
+            <if test="输入频率 != null and 输入频率 != ''">输入频率,</if>
+            <if test="输出频率 != null and 输出频率 != ''">输出频率,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="产品系列 != null">#{产品系列},</if>
+            <if test="产品型号 != null">#{产品型号},</if>
+            <if test="应用场景 != null and 应用场景 != ''">#{应用场景},</if>
+            <if test="供货厂商 != null">#{供货厂商},</if>
+            <if test="容量 != null and 容量 != ''">CONCAT(#{容量}, 'KVA'),</if>
+            <if test="功率 != null and 功率 != ''">CONCAT(#{功率}, 'KW'),</if>
+            <if test="输入电压大小 != null and 输入电压大小 != ''">CONCAT(#{输入电压大小}, 'V'),</if>
+            <if test="输入电压相位 != null">#{输入电压相位},</if>
+            <if test="输入电压分类 != null">#{输入电压分类},</if>
+            <if test="输出电压大小 != null and 输出电压大小 != ''">CONCAT(#{输出电压大小}, 'V'),</if>
+            <if test="输出电压相位 != null">#{输出电压相位},</if>
+            <if test="输出电压分类 != null">#{输出电压分类},</if>
+            <if test="输入频率 != null and 输入频率 != ''">CONCAT(#{输入频率}, 'Hz'),</if>
+            <if test="输出频率 != null and 输出频率 != ''">CONCAT(#{输出频率}, 'Hz'),</if>
+        </trim>
+    </insert>
+
+    <update id="updateUps" parameterType="Ups">
+        update ups
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="产品系列 != null">产品系列 = #{产品系列},</if>
+            <if test="产品型号 != null">产品型号 = #{产品型号},</if>
+            <if test="应用场景 != null and 应用场景 != ''">应用场景 = #{应用场景},</if>
+            <if test="供货厂商 != null">供货厂商 = #{供货厂商},</if>
+            <if test="容量 != null and 容量 != ''">容量 = #{容量},</if>
+            <if test="功率 != null and 功率 != ''">功率 = #{功率},</if>
+            <if test="输入电压大小 != null and 输入电压大小 != ''">输入电压大小 = #{输入电压大小},</if>
+            <if test="输入电压相位 != null">输入电压相位 = #{输入电压相位},</if>
+            <if test="输入电压分类 != null">输入电压分类 = #{输入电压分类},</if>
+            <if test="输出电压大小 != null and 输出电压大小 != ''">输出电压大小 = #{输出电压大小},</if>
+            <if test="输出电压相位 != null">输出电压相位 = #{输出电压相位},</if>
+            <if test="输出电压分类 != null">输出电压分类 = #{输出电压分类},</if>
+            <if test="输入频率 != null and 输入频率 != ''">输入频率 = #{输入频率},</if>
+            <if test="输出频率 != null and 输出频率 != ''">输出频率 = #{输出频率},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteUpsById" parameterType="Long">
+        delete from ups where id = #{id}
+    </delete>
+
+    <delete id="deleteUpsByIds" parameterType="Long[]">
+        delete from ups where id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+</mapper>
