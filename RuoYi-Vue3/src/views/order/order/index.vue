@@ -59,6 +59,8 @@
         <template #default="scope">
           <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)"
             v-hasPermi="['order:order:edit']">修改</el-button>
+            <el-button link type="primary" icon="Delete" @click="applyForDeletion(scope.row)"
+            v-hasPermi="['order:order:applyDelete']">申请删除</el-button>
           <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)"
             v-hasPermi="['order:order:remove']">删除</el-button>
         </template>
@@ -107,6 +109,8 @@
 
 <script setup name="Order">
 import { listOrder, getOrder, delOrder, addOrder, updateOrder, getTechnicians, getSalesmen } from "@/api/order/order"
+import { ref } from 'vue';
+import { applyForDeletionApi } from '@/api/order/approval'; 
 
 const { proxy } = getCurrentInstance()
 
@@ -121,6 +125,19 @@ const total = ref(0)
 const title = ref("")
 const technicians = ref([])
 const salesmen = ref([])
+
+// 定义applyForDeletion函数
+const applyForDeletion = (row) => {
+  const approval = {
+    workOrderId: row.id,
+    applicantId: getCurrentUserId() // 获取当前用户 ID 的方法
+  };
+  applyForDeletionApi(approval).then(() => {
+    proxy.$modal.msgSuccess("删除申请已提交，请等待审批");
+  }).catch(() => {
+    proxy.$modal.msgError("删除申请提交失败");
+  });
+};
 
 const data = reactive({
   form: {
@@ -332,6 +349,8 @@ function handleExport() {
     ...queryParams.value
   }, `order_${new Date().getTime()}.xlsx`)
 }
+
+
 
 getList()
 getTechniciansAndSalesmen()
