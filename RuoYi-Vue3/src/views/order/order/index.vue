@@ -59,8 +59,9 @@
         <template #default="scope">
           <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)"
             v-hasPermi="['order:order:edit']">修改</el-button>
-          <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)"
-            v-hasPermi="['order:order:remove']">删除</el-button>
+<!--           <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)"
+            v-hasPermi="['order:order:remove']">删除</el-button> -->
+            <el-button type="danger" @click="handleDelete(row)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -106,7 +107,7 @@
 </template>
 
 <script setup name="Order">
-import { listOrder, getOrder, delOrder, addOrder, updateOrder, getTechnicians, getSalesmen } from "@/api/order/order"
+import { listOrder, getOrder, delOrder, addOrder, updateOrder, getTechnicians, getSalesmen, applyDeleteWorkOrder  } from "@/api/order/order"
 
 const { proxy } = getCurrentInstance()
 
@@ -317,7 +318,7 @@ function submitForm() {
 }
 
 /** 删除按钮操作 */
-function handleDelete(row) {
+/* function handleDelete(row) {
   const _ids = row.id || ids.value
   proxy.$modal.confirm('是否确认删除工单记录编号为"' + _ids + '"的数据项？').then(function () {
     return delOrder(_ids)
@@ -325,6 +326,22 @@ function handleDelete(row) {
     getList()
     proxy.$modal.msgSuccess("删除成功")
   }).catch(() => { })
+} */
+
+const handleDelete = async (row) => {
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除编号为 ${row.id} 的工单记录吗？`,
+      '确认删除',
+      { type: 'warning' }
+    )
+    
+    await applyDeleteWorkOrder(row.id)
+    ElMessage.success('删除申请已提交，请等待审批')
+    getList() // 刷新列表
+  } catch (error) {
+    ElMessage.error('提交删除申请失败')
+  }
 }
 
 /** 导出按钮操作 */
@@ -333,6 +350,9 @@ function handleExport() {
     ...queryParams.value
   }, `order_${new Date().getTime()}.xlsx`)
 }
+
+
+    
 
 
 

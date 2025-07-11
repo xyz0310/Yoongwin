@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.order.mapper.WorkOrderDeleteApplyMapper">
+    <insert id="insertWorkOrderDeleteApply" parameterType="com.ruoyi.order.domain.WorkOrderDeleteApply">
+        insert into work_order_delete_apply (work_order_id, applicant_id, apply_time, approval_status, approver_id, approval_time)
+        values (#{workOrderId}, #{applicantId}, #{applyTime}, #{approvalStatus}, #{approverId}, #{approvalTime})
+    </insert>
+
+    <select id="selectWorkOrderDeleteApplyList" parameterType="com.ruoyi.order.domain.WorkOrderDeleteApply" resultType="com.ruoyi.order.domain.WorkOrderDeleteApply">
+        select * from work_order_delete_apply
+        <where>
+            <if test="workOrderId != null">
+                and work_order_id = #{workOrderId}
+            </if>
+            <if test="applicantId != null">
+                and applicant_id = #{applicantId}
+            </if>
+            <if test="approvalStatus != null and approvalStatus != ''">
+                and approval_status = #{approvalStatus}
+            </if>
+        </where>
+    </select>
+
+    <select id="selectWorkOrderDeleteApplyById" parameterType="Long" resultType="com.ruoyi.order.domain.WorkOrderDeleteApply">
+        select * from work_order_delete_apply where id = #{id}
+    </select>
+
+    <update id="updateWorkOrderDeleteApply" parameterType="com.ruoyi.order.domain.WorkOrderDeleteApply">
+        update work_order_delete_apply
+        <set>
+            <if test="workOrderId != null">
+                work_order_id = #{workOrderId},
+            </if>
+            <if test="applicantId != null">
+                applicant_id = #{applicantId},
+            </if>
+            <if test="applyTime != null">
+                apply_time = #{applyTime},
+            </if>
+            <if test="approvalStatus != null and approvalStatus != ''">
+                approval_status = #{approvalStatus},
+            </if>
+            <if test="approverId != null">
+                approver_id = #{approverId},
+            </if>
+            <if test="approvalTime != null">
+                approval_time = #{approvalTime}
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+</mapper>
