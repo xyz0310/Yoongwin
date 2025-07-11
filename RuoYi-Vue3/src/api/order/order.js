@@ -58,3 +58,15 @@ export function getSalesmen() {
     method: 'get'
   })
 }
+
+/**
+ * 申请删除工单记录
+ * @param {Array} ids 工单ID数组
+ * @returns {Promise}
+ */
+export function applyDeleteWorkOrder(ids) {
+  return request({
+    url: `/order/order/applyDelete/${ids}`,
+    method: 'post'
+  });
+}

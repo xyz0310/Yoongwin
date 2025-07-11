@@ -61,7 +61,7 @@
             v-hasPermi="['order:order:edit']">修改</el-button>
 <!--           <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)"
             v-hasPermi="['order:order:remove']">删除</el-button> -->
-            <el-button type="danger" @click="handleDelete(row)">删除</el-button>
+            <el-button type="danger" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="['order:order:remove']">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -108,6 +108,8 @@
 
 <script setup name="Order">
 import { listOrder, getOrder, delOrder, addOrder, updateOrder, getTechnicians, getSalesmen, applyDeleteWorkOrder  } from "@/api/order/order"
+import { ref, reactive, onMounted } from 'vue'
+import { ElMessageBox, ElMessage } from 'element-plus'
 
 const { proxy } = getCurrentInstance()
 
@@ -329,20 +331,17 @@ function submitForm() {
 } */
 
 const handleDelete = async (row) => {
+  console.log('点击删除按钮，row:', row); // 添加日志
   try {
-    await ElMessageBox.confirm(
-      `确定要删除编号为 ${row.id} 的工单记录吗？`,
-      '确认删除',
-      { type: 'warning' }
-    )
-    
-    await applyDeleteWorkOrder(row.id)
-    ElMessage.success('删除申请已提交，请等待审批')
-    getList() // 刷新列表
+    await ElMessageBox.confirm('确认删除...');
+    await applyDeleteWorkOrder(row.id);
+    ElMessage.success('删除申请已提交');
+    getList();
   } catch (error) {
-    ElMessage.error('提交删除申请失败')
+    ElMessage.error('提交删除申请失败');
   }
 }
+
 
 /** 导出按钮操作 */
 function handleExport() {

@@ -126,7 +126,7 @@ public class WorkOrderController extends BaseController
      */
     @PreAuthorize("@ss.hasPermi('order:order:remove')")
     @Log(title = "工单记录", businessType = BusinessType.DELETE)
-    @DeleteMapping("/{ids}")
+    @PostMapping("/applyDelete/{ids}")
     public AjaxResult applyDeleteWorkOrder(@PathVariable Long[] ids) {
         Long applicantId = SecurityUtils.getUserId();
         for (Long id : ids) {
