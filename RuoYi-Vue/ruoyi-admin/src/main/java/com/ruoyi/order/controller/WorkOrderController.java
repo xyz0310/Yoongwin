@@ -3,9 +3,6 @@ package com.ruoyi.order.controller;
 import java.util.List;
 import javax.servlet.http.HttpServletResponse;
 
-import com.ruoyi.common.utils.SecurityUtils;
-import com.ruoyi.order.domain.WorkOrderDeleteApply;
-import com.ruoyi.order.service.IWorkOrderDeleteApplyService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -30,8 +27,6 @@ public class WorkOrderController extends BaseController
 {
     @Autowired
     private IWorkOrderService workOrderService;
-    @Autowired
-    private IWorkOrderDeleteApplyService workOrderDeleteApplyService;
     /**
      * 查询工单记录列表
      */
@@ -89,16 +84,16 @@ public class WorkOrderController extends BaseController
         return toAjax(workOrderService.updateWorkOrder(workOrder));
     }
 
-/*    *//**
+    /**
      * 删除工单记录
-     *//*
+     */
     @PreAuthorize("@ss.hasPermi('order:order:remove')")
     @Log(title = "工单记录", businessType = BusinessType.DELETE)
 	@DeleteMapping("/{ids}")
     public AjaxResult remove(@PathVariable Long[] ids)
     {
         return toAjax(workOrderService.deleteWorkOrderByIds(ids));
-    }*/
+    }
 
 
     /**
@@ -121,35 +116,4 @@ public class WorkOrderController extends BaseController
         return success(salesmen);
     }
 
-    /**
-     * 申请删除工单记录
-     */
-    @PreAuthorize("@ss.hasPermi('order:order:remove')")
-    @Log(title = "工单记录", businessType = BusinessType.DELETE)
-    @PostMapping("/applyDelete/{ids}")
-    public AjaxResult applyDeleteWorkOrder(@PathVariable Long[] ids) {
-        Long applicantId = SecurityUtils.getUserId();
-        for (Long id : ids) {
-            WorkOrderDeleteApply apply = new WorkOrderDeleteApply();
-            apply.setWorkOrderId(id);
-            apply.setApplicantId(applicantId);
-            workOrderDeleteApplyService.insertWorkOrderDeleteApply(apply);
-        }
-        return success("删除申请已提交，请等待审批");
-    }
-
-    /**
-     * 部门领导审批工单删除申请
-     */
-    @PreAuthorize("@ss.hasRole('department_leader')")
-    @PostMapping("/approveDeleteApply")
-    public AjaxResult approveDeleteApply(@RequestParam Long applyId, @RequestParam String approvalStatus) {
-        Long approverId = SecurityUtils.getUserId();
-        int result = workOrderDeleteApplyService.approveWorkOrderDeleteApply(applyId, approvalStatus, approverId);
-        if (result > 0) {
-            return success("审批成功");
-        } else {
-            return error("审批失败");
-        }
-    }
 }
