@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.SysLeaveApplicationMapper">
+
+    <resultMap id="SysLeaveApplicationResult" type="com.ruoyi.common.core.domain.entity.SysLeaveApplication">
+        <id property="leaveId" column="leave_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="deptId" column="dept_id"/>
+        <result property="startTime" column="start_time"/>
+        <result property="endTime" column="end_time"/>
+        <result property="reason" column="reason"/>
+        <result property="status" column="status"/>
+        <result property="approvalOpinion" column="approval_opinion"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <select id="selectLeaveApplicationList" parameterType="com.ruoyi.common.core.domain.entity.SysLeaveApplication" resultMap="SysLeaveApplicationResult">
+        SELECT * FROM sys_leave_application
+        <where>
+            <if test="leaveId != null and leaveId != 0">
+                AND leave_id = #{leaveId}
+            </if>
+            <if test="userId != null and userId != 0">
+                AND user_id = #{userId}
+            </if>
+            <if test="deptId != null and deptId != 0">
+                AND dept_id = #{deptId}
+            </if>
+            <if test="status != null and status != ''">
+                AND status = #{status}
+            </if>
+        </where>
+        ORDER BY create_time DESC
+    </select>
+
+    <select id="selectLeaveApplicationById" parameterType="Long" resultMap="SysLeaveApplicationResult">
+        SELECT * FROM sys_leave_application WHERE leave_id = #{leaveId}
+    </select>
+
+    <insert id="insertLeaveApplication" parameterType="com.ruoyi.common.core.domain.entity.SysLeaveApplication">
+        INSERT INTO sys_leave_application (user_id, dept_id, start_time, end_time, reason, status, create_time)
+        VALUES (#{userId}, #{deptId}, #{startTime}, #{endTime}, #{reason}, '0', sysdate())
+    </insert>
+
+    <update id="updateLeaveApplication" parameterType="com.ruoyi.common.core.domain.entity.SysLeaveApplication">
+        UPDATE sys_leave_application
+        <set>
+            <if test="startTime != null">
+                start_time = #{startTime},
+            </if>
+            <if test="endTime != null">
+                end_time = #{endTime},
+            </if>
+            <if test="reason != null and reason != ''">
+                reason = #{reason},
+            </if>
+            <if test="status != null and status != ''">
+                status = #{status},
+            </if>
+            <if test="approvalOpinion != null and approvalOpinion != ''">
+                approval_opinion = #{approvalOpinion},
+            </if>
+            update_time = sysdate()
+        </set>
+        WHERE leave_id = #{leaveId}
+    </update>
+
+    <delete id="deleteLeaveApplicationById" parameterType="Long">
+        DELETE FROM sys_leave_application WHERE leave_id = #{leaveId}
+    </delete>
+</mapper>
