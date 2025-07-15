@@ -37,8 +37,8 @@
       <el-table-column prop="approvalOpinion" label="审批意见" width="200"></el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template #default="scope">
-          <el-button v-if="scope.row.status === '0'" link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['system:leave:edit']">修改</el-button>
-          <el-button v-if="scope.row.status === '0'" link type="primary" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="['system:leave:remove']">删除</el-button>
+          <el-button v-if="scope.row.status === '0'" link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['leave:leave:edit']">修改</el-button>
+          <el-button v-if="scope.row.status === '0'" link type="primary" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="['leave:leave:remove']">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -118,7 +118,7 @@ async function getList() {
   try {
     const userInfo = await getInfo();
     nickName.value = userInfo.user.nickName;
-    listLeaveApplication({ nickName }).then(response => {
+    listLeaveApplication({ nickName: nickName.value }).then(response => {
       leaveApplicationList.value = response.data;
       loading.value = false;
     });

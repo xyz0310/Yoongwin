@@ -34,7 +34,7 @@
           plain
           icon="Check"
           @click="handleApproveAll"
-          v-hasPermi="['system:leave:approve']"
+          v-hasPermi="['leave:leave:approve']"
         >批量同意</el-button>
       </el-col>
       <el-col :span="1.5">
@@ -43,7 +43,7 @@
           plain
           icon="Close"
           @click="handleRejectAll"
-          v-hasPermi="['system:leave:reject']"
+          v-hasPermi="['leave:leave:reject']"
         >批量拒绝</el-button>
       </el-col>
       <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
@@ -77,8 +77,8 @@
       <el-table-column prop="approvalOpinion" label="审批意见" width="200"></el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template #default="scope">
-          <el-button v-if="scope.row.status === '0'" link type="primary" icon="Check" @click="handleApprove(scope.row)" v-hasPermi="['system:leave:approve']">同意</el-button>
-          <el-button v-if="scope.row.status === '0'" link type="primary" icon="Close" @click="handleReject(scope.row)" v-hasPermi="['system:leave:reject']">拒绝</el-button>
+          <el-button v-if="scope.row.status === '0'" link type="primary" icon="Check" @click="handleApprove(scope.row)" v-hasPermi="['leave:leave:approve']">同意</el-button>
+          <el-button v-if="scope.row.status === '0'" link type="primary" icon="Close" @click="handleReject(scope.row)" v-hasPermi="['leave:leave:reject']">拒绝</el-button>
         </template>
       </el-table-column>
     </el-table>

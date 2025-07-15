@@ -1,80 +1,46 @@
 <template>
-  <div class="app-container home">
-    <h2 style="color: red;">输出频率默认为市电输出频率</h2>
-    <h2 style="color: red;">容量单位默认为KVA</h2>
-    <h2 style="color: red;">功率单位默认为KW</h2>
+  <div class="block text-center">
+    <el-carousel height="848px" :interval="20000" motion-blur>
+      <el-carousel-item v-for="(img, index) in images" :key="index">
+        <img :src="img" class="carousel-image" />
+      </el-carousel-item>
+    </el-carousel>
   </div>
 </template>
 
-<script setup name="Index">
-const version = ref('3.8.7')
+<script setup>
+import profileImg from '@/assets/photo/1.jpg';
+import loginBg from '@/assets/images/login-background.jpg';
 
-function goTarget(url) {
-  window.open(url, '__blank')
-}
+const images = [profileImg, loginBg];
 </script>
 
-<style scoped lang="scss">
-.home {
-  blockquote {
-    padding: 10px 20px;
-    margin: 0 0 20px;
-    font-size: 17.5px;
-    border-left: 5px solid #eee;
-  }
-  hr {
-    margin-top: 20px;
-    margin-bottom: 20px;
-    border: 0;
-    border-top: 1px solid #eee;
-  }
-  .col-item {
-    margin-bottom: 20px;
-  }
+<style scoped>
+.demonstration {
+  color: var(--el-text-color-secondary);
+}
 
-  ul {
-    padding: 0;
-    margin: 0;
-  }
+.carousel-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  margin: auto;
+}
 
-  font-family: "open sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-size: 13px;
-  color: #676a6c;
-  overflow-x: hidden;
+.el-carousel__item h3 {
+  color: #475669;
+  opacity: 0.75;
+  line-height: 200px;
+  margin: 0;
+  text-align: center;
+}
 
-  ul {
-    list-style-type: none;
-  }
+.el-carousel__item:nth-child(2n) {
+  background-color: #99a9bf;
+}
 
-  h4 {
-    margin-top: 0px;
-  }
-
-  h2 {
-    margin-top: 10px;
-    font-size: 26px;
-    font-weight: 100;
-  }
-
-  p {
-    margin-top: 10px;
-
-    b {
-      font-weight: 700;
-    }
-  }
-
-  .update-log {
-    ol {
-      display: block;
-      list-style-type: decimal;
-      margin-block-start: 1em;
-      margin-block-end: 1em;
-      margin-inline-start: 0;
-      margin-inline-end: 0;
-      padding-inline-start: 40px;
-    }
-  }
+.el-carousel__item:nth-child(2n + 1) {
+  background-color: #d3dce6;
 }
 </style>
-
