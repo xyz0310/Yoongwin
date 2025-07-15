@@ -1,0 +1,225 @@
+<template>
+  <div class="app-container">
+    <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch">
+      <el-form-item label="申请人" prop="applicant">
+        <el-input
+          v-model="queryParams.applicant"
+          placeholder="请输入申请人"
+          clearable
+          style="width: 200px"
+          @keyup.enter="handleQuery"
+        />
+      </el-form-item>
+      <el-form-item label="状态" prop="status">
+        <el-select v-model="queryParams.status" placeholder="请假状态" clearable style="width: 200px">
+          <el-option
+            v-for="dict in leave_status"
+            :key="dict.value"
+            :label="dict.label"
+            :value="dict.value"
+          />
+        </el-select>
+      </el-form-item>
+      <el-form-item>
+        <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
+        <el-button icon="Refresh" @click="resetQuery">重置</el-button>
+      </el-form-item>
+    </el-form>
+
+    <el-row :gutter="10" class="mb8">
+      <el-col :span="1.5">
+        <el-button
+          type="primary"
+          plain
+          icon="Check"
+          @click="handleApproveAll"
+          v-hasPermi="['system:leave:approve']"
+        >批量同意</el-button>
+      </el-col>
+      <el-col :span="1.5">
+        <el-button
+          type="primary"
+          plain
+          icon="Close"
+          @click="handleRejectAll"
+          v-hasPermi="['system:leave:reject']"
+        >批量拒绝</el-button>
+      </el-col>
+      <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
+    </el-row>
+
+    <el-table
+      v-if="refreshTable"
+      v-loading="loading"
+      :data="leaveApplicationList"
+      row-key="leaveId"
+      @selection-change="handleSelectionChange"
+    >
+      <el-table-column type="selection" width="55"></el-table-column>
+      <el-table-column prop="applicant" label="申请人" width="200"></el-table-column>
+      <el-table-column prop="startTime" label="开始时间" width="200">
+        <template #default="scope">
+          <span>{{ parseTime(scope.row.startTime) }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column prop="endTime" label="结束时间" width="200">
+        <template #default="scope">
+          <span>{{ parseTime(scope.row.endTime) }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column prop="reason" label="请假原因" width="300"></el-table-column>
+      <el-table-column prop="status" label="状态" width="100">
+        <template #default="scope">
+          <dict-tag :options="leave_status" :value="scope.row.status" />
+        </template>
+      </el-table-column>
+      <el-table-column prop="approvalOpinion" label="审批意见" width="200"></el-table-column>
+      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+        <template #default="scope">
+          <el-button v-if="scope.row.status === '0'" link type="primary" icon="Check" @click="handleApprove(scope.row)" v-hasPermi="['system:leave:approve']">同意</el-button>
+          <el-button v-if="scope.row.status === '0'" link type="primary" icon="Close" @click="handleReject(scope.row)" v-hasPermi="['system:leave:reject']">拒绝</el-button>
+        </template>
+      </el-table-column>
+    </el-table>
+
+    <!-- 审批意见对话框 -->
+    <el-dialog :title="approvalTitle" v-model="approvalOpen" width="400px" append-to-body>
+      <el-form ref="approvalRef" :model="approvalForm" :rules="approvalRules" label-width="80px">
+        <el-form-item label="审批意见" prop="approvalOpinion">
+          <el-input v-model="approvalForm.approvalOpinion" placeholder="请输入审批意见" type="textarea" rows="4" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button type="primary" @click="submitApproval">确 定</el-button>
+          <el-button @click="cancelApproval">取 消</el-button>
+        </div>
+      </template>
+    </el-dialog>
+  </div>
+</template>
+
+<script setup name="LeaveLeader">
+import { listLeaveApplication, updateLeaveApplication } from "@/api/leave/leave";
+
+const { proxy } = getCurrentInstance();
+const { leave_status } = proxy.useDict("leave_status");
+
+const leaveApplicationList = ref([]);
+const open = ref(false);
+const loading = ref(true);
+const showSearch = ref(true);
+const title = ref("");
+const refreshTable = ref(true);
+const approvalOpen = ref(false);
+const approvalTitle = ref("");
+const approvalForm = ref({});
+const selectedRows = ref([]);
+
+const data = reactive({
+  queryParams: {
+    applicant: undefined,
+    status: undefined
+  },
+  rules: {},
+  approvalRules: {
+    approvalOpinion: [{ required: true, message: "审批意见不能为空", trigger: "blur" }]
+  },
+});
+
+const { queryParams, rules, approvalRules } = toRefs(data);
+
+/** 查询请假申请列表 */
+function getList() {
+  loading.value = true;
+  queryParams.value.deptId = proxy.getUserDeptId();
+  listLeaveApplication(queryParams.value).then(response => {
+    leaveApplicationList.value = response.data;
+    loading.value = false;
+  });
+}
+
+/** 搜索按钮操作 */
+function handleQuery() {
+  getList();
+}
+
+/** 重置按钮操作 */
+function resetQuery() {
+  proxy.resetForm("queryRef");
+  handleQuery();
+}
+
+/** 多选框选中数据 */
+function handleSelectionChange(selection) {
+  selectedRows.value = selection;
+}
+
+/** 单个同意操作 */
+function handleApprove(row) {
+  approvalTitle.value = "同意审批";
+  approvalForm.value = { ...row, status: '1' };
+  approvalOpen.value = true;
+}
+
+/** 单个拒绝操作 */
+function handleReject(row) {
+  approvalTitle.value = "拒绝审批";
+  approvalForm.value = { ...row, status: '2' };
+  approvalOpen.value = true;
+}
+
+/** 批量同意操作 */
+function handleApproveAll() {
+  if (selectedRows.value.length === 0) {
+    proxy.$modal.msgWarning("请选择要审批的请假申请");
+    return;
+  }
+  approvalTitle.value = "批量同意审批";
+  approvalForm.value = { status: '1' };
+  approvalOpen.value = true;
+}
+
+/** 批量拒绝操作 */
+function handleRejectAll() {
+  if (selectedRows.value.length === 0) {
+    proxy.$modal.msgWarning("请选择要审批的请假申请");
+    return;
+  }
+  approvalTitle.value = "批量拒绝审批";
+  approvalForm.value = { status: '2' };
+  approvalOpen.value = true;
+}
+
+/** 提交审批意见 */
+function submitApproval() {
+  proxy.$refs["approvalRef"].validate(valid => {
+    if (valid) {
+      if (selectedRows.value.length > 0) {
+        const promises = selectedRows.value.map(row => {
+          const data = { ...row, ...approvalForm.value };
+          return updateLeaveApplication(data);
+        });
+        Promise.all(promises).then(() => {
+          proxy.$modal.msgSuccess("审批成功");
+          approvalOpen.value = false;
+          getList();
+        });
+      } else {
+        updateLeaveApplication(approvalForm.value).then(response => {
+          proxy.$modal.msgSuccess("审批成功");
+          approvalOpen.value = false;
+          getList();
+        });
+      }
+    }
+  });
+}
+
+/** 取消审批对话框 */
+function cancelApproval() {
+  approvalOpen.value = false;
+}
+
+getList();
+</script>
