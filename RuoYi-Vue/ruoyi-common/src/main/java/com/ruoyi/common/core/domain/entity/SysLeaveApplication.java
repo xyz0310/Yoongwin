@@ -15,6 +15,9 @@ public class SysLeaveApplication extends BaseEntity
 {
     private static final long serialVersionUID = 1L;
 
+    /** 申请人姓名 */
+    private String applicant;
+
     /** 请假申请ID */
     private Long leaveId;
 
@@ -38,6 +41,14 @@ public class SysLeaveApplication extends BaseEntity
 
     /** 审批意见 */
     private String approvalOpinion;
+
+    public String getApplicant() {
+        return applicant;
+    }
+
+    public void setApplicant(String applicant) {
+        this.applicant = applicant;
+    }
 
     public Long getLeaveId()
     {
@@ -134,6 +145,7 @@ public class SysLeaveApplication extends BaseEntity
                 .append("createTime", getCreateTime())
                 .append("updateBy", getUpdateBy())
                 .append("updateTime", getUpdateTime())
+                .append("applicant", getApplicant())
                 .toString();
     }
 }

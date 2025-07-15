@@ -1,4 +1,5 @@
 <template>
+
   <div class="app-container">
     <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch">
       <el-form-item label="申请人" prop="applicant">
@@ -55,7 +56,7 @@
       row-key="leaveId"
       @selection-change="handleSelectionChange"
     >
-      <el-table-column type="selection" width="55"></el-table-column>
+      <el-table-column type="selection" width="55" :selectable="isRowSelectable" ></el-table-column>
       <el-table-column prop="applicant" label="申请人" width="200"></el-table-column>
       <el-table-column prop="startTime" label="开始时间" width="200">
         <template #default="scope">
@@ -101,10 +102,14 @@
 
 <script setup name="LeaveLeader">
 import { listLeaveApplication, updateLeaveApplication } from "@/api/leave/leave";
+import { getInfo } from "@/api/login"; // 引入获取用户信息的 API
+import { getCurrentInstance, ref, reactive, toRefs } from 'vue';
 
 const { proxy } = getCurrentInstance();
 const { leave_status } = proxy.useDict("leave_status");
 
+
+const nickName = ref("");
 const leaveApplicationList = ref([]);
 const open = ref(false);
 const loading = ref(true);
@@ -119,25 +124,36 @@ const selectedRows = ref([]);
 const data = reactive({
   queryParams: {
     applicant: undefined,
-    status: undefined
+    status: undefined,
+    nickName: undefined 
   },
   rules: {},
   approvalRules: {
-    approvalOpinion: [{ required: true, message: "审批意见不能为空", trigger: "blur" }]
+    approvalOpinion: []
   },
 });
 
 const { queryParams, rules, approvalRules } = toRefs(data);
 
 /** 查询请假申请列表 */
-function getList() {
+async function getList() {
   loading.value = true;
-  queryParams.value.deptId = proxy.getUserDeptId();
-  listLeaveApplication(queryParams.value).then(response => {
+  try {
+    const userInfo = await getInfo();
+    nickName.value = userInfo.user.nickName;
+    queryParams.value.nickName = nickName.value;
+
+    const response = await listLeaveApplication(queryParams.value);
+    console.log('接口返回数据：', response.data); 
+
     leaveApplicationList.value = response.data;
+  } catch (error) {
+    console.error('获取请假列表失败:', error);
+  } finally {
     loading.value = false;
-  });
+  }
 }
+
 
 /** 搜索按钮操作 */
 function handleQuery() {
@@ -193,28 +209,51 @@ function handleRejectAll() {
 
 /** 提交审批意见 */
 function submitApproval() {
-  proxy.$refs["approvalRef"].validate(valid => {
+  proxy.$refs["approvalRef"].validate(async (valid) => {
     if (valid) {
-      if (selectedRows.value.length > 0) {
-        const promises = selectedRows.value.map(row => {
-          const data = { ...row, ...approvalForm.value };
-          return updateLeaveApplication(data);
-        });
-        Promise.all(promises).then(() => {
-          proxy.$modal.msgSuccess("审批成功");
-          approvalOpen.value = false;
-          getList();
-        });
-      } else {
-        updateLeaveApplication(approvalForm.value).then(response => {
-          proxy.$modal.msgSuccess("审批成功");
-          approvalOpen.value = false;
-          getList();
-        });
+      try {
+        const userInfo = await getInfo();
+        const user = userInfo.user;
+
+        if (selectedRows.value.length > 0) {
+          const promises = selectedRows.value.map(row => {
+            const data = {
+              ...row,
+              ...approvalForm.value,
+              applicant: row.applicant || user.nickName,
+              nickName: user.nickName,
+              userId: user.userId,
+              deptId: user.deptId
+            };
+            return updateLeaveApplication(data);
+          });
+          await Promise.all(promises);
+        } else {
+          const data = {
+            ...approvalForm.value,
+            applicant: approvalForm.value.applicant || user.nickName,
+            nickName: user.nickName,
+            userId: user.userId,
+            deptId: user.deptId
+          };
+          await updateLeaveApplication(data);
+        }
+
+        proxy.$modal.msgSuccess("审批成功");
+        approvalOpen.value = false;
+        getList();
+      } catch (err) {
+        console.error("审批失败", err);
       }
     }
   });
 }
+
+/** 仅允许选择待审批（status === '0'）的申请 */
+function isRowSelectable(row) {
+  return row.status === '0';
+}
+
 
 /** 取消审批对话框 */
 function cancelApproval() {

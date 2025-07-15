@@ -6,6 +6,7 @@
 
     <resultMap id="SysLeaveApplicationResult" type="com.ruoyi.common.core.domain.entity.SysLeaveApplication">
         <id property="leaveId" column="leave_id"/>
+        <result property="applicant" column="applicant"/>
         <result property="userId" column="user_id"/>
         <result property="deptId" column="dept_id"/>
         <result property="startTime" column="start_time"/>
@@ -20,6 +21,9 @@
     <select id="selectLeaveApplicationList" parameterType="com.ruoyi.common.core.domain.entity.SysLeaveApplication" resultMap="SysLeaveApplicationResult">
         SELECT * FROM sys_leave_application
         <where>
+            <if test="applicant != null and applicant != ''">
+                AND applicant LIKE CONCAT('%', #{applicant}, '%')
+            </if>
             <if test="leaveId != null and leaveId != 0">
                 AND leave_id = #{leaveId}
             </if>
@@ -41,13 +45,16 @@
     </select>
 
     <insert id="insertLeaveApplication" parameterType="com.ruoyi.common.core.domain.entity.SysLeaveApplication">
-        INSERT INTO sys_leave_application (user_id, dept_id, start_time, end_time, reason, status, create_time)
-        VALUES (#{userId}, #{deptId}, #{startTime}, #{endTime}, #{reason}, '0', sysdate())
+        INSERT INTO sys_leave_application (user_id, dept_id, applicant, start_time, end_time, reason, status, create_time)
+        VALUES (#{userId}, #{deptId}, #{applicant}, #{startTime}, #{endTime}, #{reason}, '0', sysdate())
     </insert>
 
     <update id="updateLeaveApplication" parameterType="com.ruoyi.common.core.domain.entity.SysLeaveApplication">
         UPDATE sys_leave_application
         <set>
+            <if test="applicant != null and applicant != ''">
+                applicant = #{applicant},
+            </if>
             <if test="startTime != null">
                 start_time = #{startTime},
             </if>

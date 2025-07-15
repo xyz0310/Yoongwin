@@ -88,10 +88,13 @@
 
 <script setup name="LeaveEmployee">
 import { listLeaveApplication, getLeaveApplication, addLeaveApplication, updateLeaveApplication, deleteLeaveApplication } from "@/api/leave/leave";
+import { getCurrentInstance, ref, reactive, toRefs } from 'vue';
+import { getInfo } from "@/api/login"; // 引入获取用户信息的 API
 
 const { proxy } = getCurrentInstance();
 const { leave_status } = proxy.useDict("leave_status");
 
+const nickName = ref("");
 const leaveApplicationList = ref([]);
 const open = ref(false);
 const loading = ref(true);
@@ -110,12 +113,19 @@ const data = reactive({
 const { form, rules } = toRefs(data);
 
 /** 查询请假申请列表 */
-function getList() {
+async function getList() {
   loading.value = true;
-  listLeaveApplication({ userId: proxy.getUserId() }).then(response => {
-    leaveApplicationList.value = response.data;
+  try {
+    const userInfo = await getInfo();
+    nickName.value = userInfo.user.nickName;
+    listLeaveApplication({ nickName }).then(response => {
+      leaveApplicationList.value = response.data;
+      loading.value = false;
+    });
+  } catch (error) {
+    console.error('Failed to get user info:', error);
     loading.value = false;
-  });
+  }
 }
 
 /** 取消按钮 */
@@ -155,7 +165,7 @@ function handleUpdate(row) {
 }
 
 /** 提交按钮 */
-function submitForm() {
+async function submitForm() {
   proxy.$refs["leaveRef"].validate(valid => {
     if (valid) {
       if (form.value.leaveId != undefined) {
@@ -165,11 +175,22 @@ function submitForm() {
           getList();
         });
       } else {
-        form.value.userId = proxy.getUserId();
-        addLeaveApplication(form.value).then(response => {
-          proxy.$modal.msgSuccess("新增成功");
-          open.value = false;
-          getList();
+        getInfo().then(userInfo => {
+          const user = userInfo.user;
+          nickName.value = user.nickName;
+          form.value.nickName = nickName.value;
+          form.value.applicant = nickName.value;
+          form.value.nickName = user.nickName;
+          form.value.userId = user.userId;
+          form.value.deptId = user.deptId;
+          form.value.applicant = user.nickName;
+          addLeaveApplication(form.value).then(response => {
+            proxy.$modal.msgSuccess("新增成功");
+            open.value = false;
+            getList();
+          });
+        }).catch(error => {
+          console.error('Failed to get user info:', error);
         });
       }
     }
