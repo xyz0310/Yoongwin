@@ -20,12 +20,12 @@
     >
       <el-table-column prop="startTime" label="开始时间" width="200">
         <template #default="scope">
-          <span>{{ parseTime(scope.row.startTime) }}</span>
+          <span>{{ parseTime(scope.row.startTime, '{y}-{m}-{d}') }}</span>
         </template>
       </el-table-column>
       <el-table-column prop="endTime" label="结束时间" width="200">
         <template #default="scope">
-          <span>{{ parseTime(scope.row.endTime) }}</span>
+          <span>{{ parseTime(scope.row.endTime, '{y}-{m}-{d}') }}</span>
         </template>
       </el-table-column>
       <el-table-column prop="reason" label="请假原因" width="300"></el-table-column>
@@ -42,6 +42,13 @@
         </template>
       </el-table-column>
     </el-table>
+    <pagination
+      v-show="total > 0"
+      :total="total"
+      v-model:page="queryParams.pageNum"
+      v-model:limit="queryParams.pageSize"
+      @pagination="getList"
+    />
 
     <!-- 添加或修改请假申请对话框 -->
     <el-dialog :title="title" v-model="open" width="600px" append-to-body>
@@ -54,6 +61,7 @@
                 type="date"
                 placeholder="选择开始时间"
                 style="width: 100%"
+                :disabled-date="disabledBeforeToday"
               />
             </el-form-item>
           </el-col>
@@ -64,6 +72,7 @@
                 type="date"
                 placeholder="选择结束时间"
                 style="width: 100%"
+                :disabled-date="disabledBeforeToday"
               />
             </el-form-item>
           </el-col>
@@ -93,6 +102,7 @@ import { getInfo } from "@/api/login"; // 引入获取用户信息的 API
 
 const { proxy } = getCurrentInstance();
 const { leave_status } = proxy.useDict("leave_status");
+const total = ref(0);
 
 const nickName = ref("");
 const leaveApplicationList = ref([]);
@@ -101,16 +111,34 @@ const loading = ref(true);
 const title = ref("");
 const refreshTable = ref(true);
 
+
 const data = reactive({
+  queryParams :{
+  pageNum: 1,
+  pageSize: 13,
+  },
   form: {},
   rules: {
     startTime: [{ required: true, message: "开始时间不能为空", trigger: "change" }],
-    endTime: [{ required: true, message: "结束时间不能为空", trigger: "change" }],
+    endTime: [{ required: true, message: "结束时间不能为空", trigger: "change" },
+       {
+      validator: (rule, value, callback) => {
+        if (!value || !form.value.startTime) {
+          return callback(); // 表示不校验，通过
+        }
+        if (new Date(value) <= new Date(form.value.startTime)) {
+          return callback(new Error("结束时间必须大于开始时间"));
+        }
+        return callback();
+      },
+      trigger: "change"
+    }
+    ],
     reason: [{ required: true, message: "请假原因不能为空", trigger: "blur" }]
   },
 });
 
-const { form, rules } = toRefs(data);
+const { form, rules, queryParams } = toRefs(data);
 
 /** 查询请假申请列表 */
 async function getList() {
@@ -118,15 +146,22 @@ async function getList() {
   try {
     const userInfo = await getInfo();
     nickName.value = userInfo.user.nickName;
-    listLeaveApplication({ nickName: nickName.value }).then(response => {
-      leaveApplicationList.value = response.data;
+
+    listLeaveApplication({
+      ...queryParams.value,
+      nickName: nickName.value
+    }).then(response => {
+      leaveApplicationList.value = response.rows || response.data;
+      total.value = response.total || response.data?.length || 0;
       loading.value = false;
     });
+
   } catch (error) {
     console.error('Failed to get user info:', error);
     loading.value = false;
   }
 }
+
 
 /** 取消按钮 */
 function cancel() {
@@ -206,6 +241,13 @@ function handleDelete(row) {
     proxy.$modal.msgSuccess("删除成功");
   }).catch(() => {});
 }
+
+function disabledBeforeToday(time) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return time.getTime() < today.getTime();
+}
+
 
 getList();
 </script>

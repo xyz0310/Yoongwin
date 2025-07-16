@@ -2,11 +2,17 @@ package com.ruoyi.web.controller.system;
 
 import java.util.List;
 
+import com.ruoyi.common.annotation.Log;
+import com.ruoyi.common.core.domain.entity.SysDept;
 import com.ruoyi.common.core.domain.entity.SysRole;
 import com.ruoyi.common.core.domain.entity.SysUser;
 import com.ruoyi.common.core.domain.model.LoginUser;
+import com.ruoyi.common.enums.BusinessType;
 import com.ruoyi.common.utils.ServletUtils;
+import com.ruoyi.common.utils.poi.ExcelUtil;
 import com.ruoyi.framework.web.service.TokenService;
+import com.ruoyi.system.service.ISysDeptService;
+import com.ruoyi.system.service.impl.SysDeptServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -21,6 +27,8 @@ import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.domain.entity.SysLeaveApplication;
 import com.ruoyi.system.service.ISysLeaveApplicationService;
+
+import javax.servlet.http.HttpServletResponse;
 
 
 /**
@@ -40,6 +48,7 @@ public class SysLeaveApplicationController extends BaseController
     /**
      * 获取请假申请列表
      */
+    @PreAuthorize("@ss.hasPermi('leave:leave:record')")
     @GetMapping("/list")
     public AjaxResult list(SysLeaveApplication leaveApplication)
     {
@@ -54,8 +63,11 @@ public class SysLeaveApplicationController extends BaseController
         boolean isLeader = currentUser.getRoles().stream()
                 .map(SysRole::getRoleKey)
                 .anyMatch(roleKey -> roleKey != null && roleKey.contains("leader"));
+        boolean isHR = currentUser.getRoles().stream()
+                .map(SysRole::getRoleKey)
+                .anyMatch(roleKey -> "hr".equalsIgnoreCase(roleKey));
         // 非管理员
-        if (!isAdmin && !isSpecialRole) {
+        if (!isAdmin && !isSpecialRole && !isHR) {
             if (isLeader) {
                 // 领导只看本部门
                 leaveApplication.setDeptId(currentUser.getDeptId());
@@ -85,7 +97,12 @@ public class SysLeaveApplicationController extends BaseController
     @PostMapping
     public AjaxResult add(@RequestBody SysLeaveApplication leaveApplication)
     {
-        return toAjax(leaveApplicationService.insertLeaveApplication(leaveApplication));
+        try {
+            return toAjax(leaveApplicationService.insertLeaveApplication(leaveApplication));
+        } catch (Exception e) {
+            e.printStackTrace(); // 打印异常栈
+            return error("服务器异常: " + e.getMessage());
+        }
     }
 
     /**
@@ -105,4 +122,18 @@ public class SysLeaveApplicationController extends BaseController
     {
         return toAjax(leaveApplicationService.deleteLeaveApplicationById(leaveId));
     }
+
+    /**
+     * 导出请假申请列表
+     */
+    @PreAuthorize("@ss.hasPermi('leave:leave:export')")
+    @GetMapping("/export/list")
+    public void export(HttpServletResponse response, SysLeaveApplication leaveApplication) {
+        List<SysLeaveApplication> list = leaveApplicationService.selectLeaveApplicationList(leaveApplication);
+        ExcelUtil<SysLeaveApplication> util = new ExcelUtil<>(SysLeaveApplication.class);
+        util.exportExcel(response, list, "请假记录");
+    }
+
+
+
 }

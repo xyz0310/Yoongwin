@@ -43,12 +43,18 @@ export function deleteLeaveApplication(leaveId) {
   })
 }
 
-// 导出请假申请
+// 导出请假记录
 export function exportLeaveApplication(query) {
   return request({
-    url: '/leave/leave/export',
+    url: '/leave/leave/export/list',
     method: 'get',
     params: query,
     responseType: 'blob'
-  })
-}    
+  }).then(response => {
+    const blob = new Blob([response]);
+    const link = document.createElement('a');
+    link.href = window.URL.createObjectURL(blob);
+    link.download = '请假记录.xlsx';
+    link.click();
+  });
+} 

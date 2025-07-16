@@ -60,12 +60,12 @@
       <el-table-column prop="applicant" label="申请人" width="200"></el-table-column>
       <el-table-column prop="startTime" label="开始时间" width="200">
         <template #default="scope">
-          <span>{{ parseTime(scope.row.startTime) }}</span>
+          <span>{{ parseTime(scope.row.startTime, '{y}-{m}-{d}') }}</span>
         </template>
       </el-table-column>
       <el-table-column prop="endTime" label="结束时间" width="200">
         <template #default="scope">
-          <span>{{ parseTime(scope.row.endTime) }}</span>
+          <span>{{ parseTime(scope.row.endTime, '{y}-{m}-{d}') }}</span>
         </template>
       </el-table-column>
       <el-table-column prop="reason" label="请假原因" width="300"></el-table-column>
@@ -82,6 +82,14 @@
         </template>
       </el-table-column>
     </el-table>
+
+    <pagination
+      v-show="total > 0"
+      :total="total"
+      v-model:page="queryParams.pageNum"
+      v-model:limit="queryParams.pageSize"
+      @pagination="getList"
+    />
 
     <!-- 审批意见对话框 -->
     <el-dialog :title="approvalTitle" v-model="approvalOpen" width="400px" append-to-body>
@@ -107,7 +115,7 @@ import { getCurrentInstance, ref, reactive, toRefs } from 'vue';
 
 const { proxy } = getCurrentInstance();
 const { leave_status } = proxy.useDict("leave_status");
-
+const total = ref(0);
 
 const nickName = ref("");
 const leaveApplicationList = ref([]);
@@ -123,6 +131,8 @@ const selectedRows = ref([]);
 
 const data = reactive({
   queryParams: {
+    pageNum: 1,
+    pageSize: 13,
     applicant: undefined,
     status: undefined,
     nickName: undefined 
@@ -143,10 +153,15 @@ async function getList() {
     nickName.value = userInfo.user.nickName;
     queryParams.value.nickName = nickName.value;
 
+    // ✅ 正确传参（queryParams 是 ref，要取 value）
     const response = await listLeaveApplication(queryParams.value);
-    console.log('接口返回数据：', response.data); 
 
-    leaveApplicationList.value = response.data;
+    // ✅ 设置表格数据
+    leaveApplicationList.value = response.rows || response.data;
+
+    // ✅ 设置总条数（决定分页是否显示）
+    total.value = response.total || response.data?.length || 0;
+
   } catch (error) {
     console.error('获取请假列表失败:', error);
   } finally {
