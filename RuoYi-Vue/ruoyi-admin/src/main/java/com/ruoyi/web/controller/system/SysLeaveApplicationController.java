@@ -48,7 +48,7 @@ public class SysLeaveApplicationController extends BaseController
     /**
      * 获取请假申请列表
      */
-    @PreAuthorize("@ss.hasPermi('leave:leave:record')")
+    @PreAuthorize("@ss.hasPermi('leave:leave:record')|| @ss.hasPermi('leave:leave:employee')|| @ss.hasPermi('leave:leave:leader')")
     @GetMapping("/list")
     public AjaxResult list(SysLeaveApplication leaveApplication)
     {

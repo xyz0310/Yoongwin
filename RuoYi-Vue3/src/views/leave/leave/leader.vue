@@ -1,7 +1,7 @@
 <template>
 
   <div class="app-container">
-    <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch">
+<!--     <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch">
       <el-form-item label="申请人" prop="applicant">
         <el-input
           v-model="queryParams.applicant"
@@ -25,7 +25,14 @@
         <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
         <el-button icon="Refresh" @click="resetQuery">重置</el-button>
       </el-form-item>
-    </el-form>
+    </el-form> -->
+
+    <el-tabs v-model="queryParams.status" @tab-click="handleQuery" class="mb8">
+      <el-tab-pane label="全部" name="" />
+      <el-tab-pane label="待审批" name="0" />
+      <el-tab-pane label="已同意" name="1" />
+      <el-tab-pane label="已拒绝" name="2" />
+    </el-tabs>
 
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
@@ -134,7 +141,7 @@ const data = reactive({
     pageNum: 1,
     pageSize: 13,
     applicant: undefined,
-    status: undefined,
+    status: '0',
     nickName: undefined 
   },
   rules: {},
@@ -240,6 +247,7 @@ function submitApproval() {
               userId: user.userId,
               deptId: user.deptId
             };
+            console.log("批量审批提交数据:", data);
             return updateLeaveApplication(data);
           });
           await Promise.all(promises);
@@ -251,18 +259,22 @@ function submitApproval() {
             userId: user.userId,
             deptId: user.deptId
           };
+          console.log("单个审批提交数据:", data);
           await updateLeaveApplication(data);
         }
 
         proxy.$modal.msgSuccess("审批成功");
         approvalOpen.value = false;
+        queryParams.value.status = '';
         getList();
+
       } catch (err) {
         console.error("审批失败", err);
       }
     }
   });
 }
+
 
 /** 仅允许选择待审批（status === '0'）的申请 */
 function isRowSelectable(row) {
