@@ -7,6 +7,11 @@ package com.ruoyi.common.constant;
  */
 public class CacheConstants
 {
+
+    /**
+     * 每个用户名当前唯一 token 的映射
+     */
+    public static final String USER_TOKEN_KEY = "user_token:";
     /**
      * 登录用户 redis key
      */
