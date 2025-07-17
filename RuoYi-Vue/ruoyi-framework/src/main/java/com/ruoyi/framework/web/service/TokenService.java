@@ -51,6 +51,7 @@ public class TokenService
 
     private static final Long MILLIS_MINUTE_TWENTY = 20 * 60 * 1000L;
 
+
     @Autowired
     private RedisCache redisCache;
 
@@ -101,23 +102,48 @@ public class TokenService
         if (StringUtils.isNotEmpty(token))
         {
             String userKey = getTokenKey(token);
+            LoginUser loginUser = redisCache.getCacheObject(userKey);
+            if (loginUser != null)
+            {
+                // 删除user_token:<userId>
+                String userTokenKey = getUserTokenKey(loginUser.getUserId());
+                redisCache.deleteObject(userTokenKey);
+            }
+            // 删除login_tokens:<token>
             redisCache.deleteObject(userKey);
         }
     }
 
     /**
-     * 创建令牌
+     * 创建令牌，确保同一用户只能有一个token（踢出旧token）
      *
-     * @param loginUser 用户信息
-     * @return 令牌
+     * @param loginUser 登录用户信息
+     * @return 新token字符串
      */
     public String createToken(LoginUser loginUser)
     {
+        Long userId = loginUser.getUserId();
+        // 先查询该用户是否有旧token
+        String userTokenKey = getUserTokenKey(userId);
+        String oldToken = redisCache.getCacheObject(userTokenKey);
+
+        // 如果有旧token，删除旧token缓存，强制下线旧token
+        if (StringUtils.isNotEmpty(oldToken))
+        {
+            String oldLoginKey = getTokenKey(oldToken);
+            redisCache.deleteObject(oldLoginKey);
+        }
+
+        // 生成新token
         String token = IdUtils.fastUUID();
         loginUser.setToken(token);
         setUserAgent(loginUser);
         refreshToken(loginUser);
 
+        // 缓存新token到user_token映射
+        redisCache.setCacheObject(userTokenKey, token, expireTime, TimeUnit.MINUTES);
+
+        // 组装JWT令牌
         Map<String, Object> claims = new HashMap<>();
         claims.put(Constants.LOGIN_USER_KEY, token);
         claims.put(Constants.JWT_USERNAME, loginUser.getUsername());
@@ -141,17 +167,14 @@ public class TokenService
     }
 
     /**
-     * 刷新令牌有效期
-     *
-     * @param loginUser 登录信息
+     * 刷新token缓存
      */
     public void refreshToken(LoginUser loginUser)
     {
         loginUser.setLoginTime(System.currentTimeMillis());
         loginUser.setExpireTime(loginUser.getLoginTime() + expireTime * MILLIS_MINUTE);
-        // 根据uuid将loginUser缓存
-        String userKey = getTokenKey(loginUser.getToken());
-        redisCache.setCacheObject(userKey, loginUser, expireTime, TimeUnit.MINUTES);
+        String loginKey = getTokenKey(loginUser.getToken());
+        redisCache.setCacheObject(loginKey, loginUser, expireTime, TimeUnit.MINUTES);
     }
 
     /**
@@ -228,5 +251,10 @@ public class TokenService
     private String getTokenKey(String uuid)
     {
         return CacheConstants.LOGIN_TOKEN_KEY + uuid;
+    }
+
+    private String getUserTokenKey(Long userId)
+    {
+        return CacheConstants.USER_TOKEN_KEY + userId;
     }
 }

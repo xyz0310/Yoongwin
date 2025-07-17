@@ -67,13 +67,12 @@ public class SysLoginService
         validateCaptcha(username, code, uuid);
         // 登录前置校验
         loginPreCheck(username, password);
-        // 用户验证
+
         Authentication authentication = null;
         try
         {
             UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
             AuthenticationContextHolder.setContext(authenticationToken);
-            // 该方法会去调用UserDetailsServiceImpl.loadUserByUsername
             authentication = authenticationManager.authenticate(authenticationToken);
         }
         catch (Exception e)
@@ -93,10 +92,13 @@ public class SysLoginService
         {
             AuthenticationContextHolder.clearContext();
         }
+
         AsyncManager.me().execute(AsyncFactory.recordLogininfor(username, Constants.LOGIN_SUCCESS, MessageUtils.message("user.login.success")));
+
         LoginUser loginUser = (LoginUser) authentication.getPrincipal();
         recordLoginInfo(loginUser.getUserId());
-        // 生成token
+
+        // 这里调用 createToken 会自动踢掉旧token
         return tokenService.createToken(loginUser);
     }
 
